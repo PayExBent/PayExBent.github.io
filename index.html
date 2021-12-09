@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>God Jul!</title>
+		<style>
+			body { margin: 0; }
+            #greeting {
+                position: absolute;
+                top: 50px;
+                width: 100%;
+                text-align: center;
+                z-index: 100;
+                display:block;
+                font-size: 50px;
+                font-weight: bold;
+                color: red;
+                text-shadow: 3px 3px black;
+            }
+		</style>
+	</head>
+	<body>
+		<script type="module">
+            import * as THREE from 'https://cdn.skypack.dev/three@v0.134.0-dfARp6tVCbGvQehLfkdx';
+            import { GLTFLoader } from 'https://cdn.skypack.dev/three@v0.134.0-dfARp6tVCbGvQehLfkdx/examples/jsm/loaders/GLTFLoader.js';
+            import { OrbitControls } from 'https://cdn.skypack.dev/three@v0.134.0-dfARp6tVCbGvQehLfkdx/examples/jsm/controls/OrbitControls.js';
+			
+			const renderer = new THREE.WebGLRenderer();
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+			renderer.setSize( width, height );
+			document.body.appendChild( renderer.domElement );
+
+            //scene and model
+            const scene = new THREE.Scene();
+            const loader = new GLTFLoader();
+            loader.load( 'assets/valutan.glb', function (gltf) {
+                const model = gltf.scene;
+				model.position.set( 0, -3, 0 );
+				model.scale.set( 1.5, 1.5, 1.5 );
+				scene.add(model);
+            }, undefined, function (error) {
+                console.error(error);
+            });
+
+            //fog
+            scene.background = new THREE.Color( 0x28953c );
+            scene.fog = new THREE.Fog( 0x000000, 5, 70 );
+
+            //background gradient image
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load('assets/greenbg.png', function(texture){
+                scene.background = texture;
+            });
+
+            //snow
+            const vertices = [];
+            for ( let i = 0; i < 500; i ++ ) {
+                const x = THREE.MathUtils.randFloatSpread( 50 );
+                const y = THREE.MathUtils.randFloat(0, 50 );
+                const z = THREE.MathUtils.randFloatSpread( 50 );
+                vertices.push( x, y, z );
+            }
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+            const material = new THREE.PointsMaterial( { size: 0.1, color: 0x888888 } );
+            const points = new THREE.Points( geometry, material );
+            scene.add( points );
+
+            //light
+            const light = new THREE.PointLight( 0xffffff, 1, 100 );
+            light.position.set( 50, 50, 50 );
+            scene.add( light );
+            const light2 = new THREE.AmbientLight( 0x404040 ); // soft white light
+            scene.add( light2 );
+
+            //camera
+			const camera = new THREE.PerspectiveCamera( 75, width / height, 1, 100 );
+            const controls = new OrbitControls( camera, renderer.domElement );
+            camera.position.set( 0, 13, 20 );
+            controls.autoRotate = true;
+            controls.enabled = false;
+            controls.update();
+
+            document.addEventListener( 'keydown', function(event) {
+                switch ( event.keyCode ) {
+                    case 32: //space
+                    controls.autoRotate = !controls.autoRotate;
+                    controls.enabled = !controls.enabled;
+                }
+            } );
+
+            function snowFall(){
+                const positions = points.geometry.attributes.position.array;
+                for(let i = 1; i < positions.length; i = i + 3){
+                    var currentPos = positions[i];
+                    if(currentPos > 0.0){
+                        positions[i] = currentPos - 0.1;
+                    }
+                    else{
+                        positions[i] = 50;
+                    }
+                    
+                }
+                points.geometry.attributes.position.needsUpdate = true;
+            }
+
+			const animate = function () {
+				requestAnimationFrame(animate);
+                snowFall();
+                controls.update();
+				renderer.render(scene, camera);
+			};
+			animate();
+		</script>
+        <div id="greeting">God Jul PayEx!</div>
+	</body>
+</html>
